@@ -6,6 +6,10 @@ on:
   pull_request:
     branches: [ "**" ]
 
+permissions:
+  contents: write
+  packages: write
+
 jobs:
   build-android:
     runs-on: macos-latest
@@ -24,13 +28,19 @@ jobs:
       uses: actions/setup-go@v5
       with:
         go-version: 'stable'
-    
+
+    - name: Clone simplybs
+      run: |
+        git clone https://github.com/MrCyjaneK/simplybs
+
     - name: Cache simplybs buildlib
       uses: actions/cache@v4
       with:
         path: simplybs/.buildlib/darwin_arm64/built
-        key: simplybs-buildlib-${{ matrix.target }}
-    
+        key: simplybs-buildlib-${{ matrix.target }}..${{ hashFiles('simplybs/') }}
+        restore-keys: |
+          simplybs-buildlib-${{ matrix.target }}..
+
     - name: Build ${{ matrix.target }}
       run: |
         ./build.sh ${{ matrix.target }}
@@ -77,12 +87,17 @@ jobs:
       uses: actions/setup-go@v5
       with:
         go-version: 'stable'
+    - name: Clone simplybs
+      run: |
+        git clone https://github.com/MrCyjaneK/simplybs
     
     - name: Cache simplybs buildlib
       uses: actions/cache@v4
       with:
         path: simplybs/.buildlib/darwin_arm64/built
-        key: simplybs-buildlib-${{ matrix.target }}
+        key: simplybs-buildlib-${{ matrix.target }}..${{ hashFiles('simplybs/') }}
+        restore-keys: |
+          simplybs-buildlib-${{ matrix.target }}..
     
     - name: Build ${{ matrix.target }}
       run: |
@@ -202,9 +217,10 @@ jobs:
     
     - name: Create tarball
       run: |
-        tar -czf torch_dart-${{ steps.get_version.outputs.version }}.tar.gz \
+        tar -czf ../torch_dart-${{ steps.get_version.outputs.version }}.tar.gz \
           --exclude='.git' \
           .
+        mv ../torch_dart-${{ steps.get_version.outputs.version }}.tar.gz .
     
     - name: Create Release
       if: github.ref == 'refs/heads/master' && github.event_name == 'push'
