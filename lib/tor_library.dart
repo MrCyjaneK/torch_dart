@@ -24,7 +24,7 @@ final TorchDartBindings torBindings = TorchDartBindings(_dylib);
 
 class TorLibrary implements Tor {
   @override
-  Never start(List<String> argv) {
+  void start(List<String> argv) {
     final argsNative = argv.map((e) => e.toNativeUtf8()).toList();
 
     // Allocate the argv pointer array
@@ -34,8 +34,7 @@ class TorLibrary implements Tor {
       argvPtr[i] = argsNative[i].cast<Char>();
     }
 
-    final result = torBindings.TOR_start(argsNative.length, argvPtr);
-    throw Exception('failed to start tor: $result');
+    torBindings.TOR_start(argsNative.length, argvPtr);
   }
 
   @override

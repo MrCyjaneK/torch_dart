@@ -8,7 +8,7 @@
 final torList = await Tor.getTorList();
 if (torList.isEmpty) throw Exception("No tor found");
 torList[0].version; // tor X.X.X.X
-torList[0].start([]); // this, never returns (can throw), make sure to call it in isolate
+torList[0].start([]); // this returns quickly, calling this more than once will crash your app if using torch .so
 // array inside ^^^^ is argv as if you would call ./tor $@
 ```
 

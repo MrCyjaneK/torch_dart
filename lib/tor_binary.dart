@@ -10,9 +10,8 @@ class TorBinary implements Tor {
   final String internalTorPath;
 
   @override
-  Never start(List<String> argv) {
+  void start(List<String> argv) {
     Process.runSync(internalTorPath, argv);
-    throw Exception('failed to start tor');
   }
 
   @override

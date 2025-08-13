@@ -29,10 +29,7 @@ jobs:
       uses: actions/cache@v4
       with:
         path: simplybs/.buildlib/darwin_arm64/built
-        key: simplybs-buildlib-${{ matrix.target }}-${{ hashFiles('simplybs/**') }}
-        restore-keys: |
-          simplybs-buildlib-${{ matrix.target }}-
-          simplybs-buildlib-
+        key: simplybs-buildlib-${{ matrix.target }}
     
     - name: Build ${{ matrix.target }}
       run: |
@@ -85,10 +82,7 @@ jobs:
       uses: actions/cache@v4
       with:
         path: simplybs/.buildlib/darwin_arm64/built
-        key: simplybs-buildlib-${{ matrix.target }}-${{ hashFiles('simplybs/**') }}
-        restore-keys: |
-          simplybs-buildlib-${{ matrix.target }}-
-          simplybs-buildlib-
+        key: simplybs-buildlib-${{ matrix.target }}
     
     - name: Build ${{ matrix.target }}
       run: |
