@@ -167,7 +167,7 @@ jobs:
       with:
         pattern: android-*
         path: android-artifacts/
-        merge-multiple: true
+        merge-multiple: false
     
     - name: Download Apple artifacts
       uses: actions/download-artifact@v4
@@ -177,9 +177,9 @@ jobs:
     
     - name: Assemble final package
       run: |
-        cp android-artifacts/aarch64-linux-android/libtorch.so android/src/main/jniLibs/arm64-v8a/
-        cp android-artifacts/x86_64-linux-android/libtorch.so android/src/main/jniLibs/x86_64/
-        cp android-artifacts/armv7a-linux-androideabi/libtorch.so android/src/main/jniLibs/armeabi-v7a/
+        cp android-artifacts/android-aarch64-linux-android/libtorch.so android/src/main/jniLibs/arm64-v8a/
+        cp android-artifacts/android-x86_64-linux-android/libtorch.so android/src/main/jniLibs/x86_64/
+        cp android-artifacts/android-armv7a-linux-androideabi/libtorch.so android/src/main/jniLibs/armeabi-v7a/
         
         cp -r apple-artifacts/ios/LibTorch.xcframework ios/
         cp -r apple-artifacts/macos/LibTorch.xcframework macos/
