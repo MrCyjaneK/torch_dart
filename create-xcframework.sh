@@ -39,26 +39,23 @@ write_info_plist() {
     local arch="$4"
     local plist_path="${framework_bundle}/Info.plist"
 
-    local platform dtplatformname dtsdkname min_os_version device_family
+    local platform min_os_version device_family
 
-    if [[ "$target" == *"-ios-simulator" ]]; then
+    if [[ "$target" == "ios-simulator" ]]; then
         platform="iPhoneSimulator"
-        dtplatformname="iphonesimulator"
-        dtsdkname="iphonesimulator17.4"
         min_os_version="12.0"
         device_family="<integer>1</integer><integer>2</integer>"
-    elif [[ "$target" == *"-ios" ]]; then
+    elif [[ "$target" == "ios" ]]; then
         platform="iPhoneOS"
-        dtplatformname="iphoneos"
-        dtsdkname="iphoneos17.4"
         min_os_version="12.0"
         device_family="<integer>1</integer><integer>2</integer>"
-    elif [[ "$target" == *"-darwin" ]]; then
+    elif [[ "$target" == "darwin" ]]; then
         platform="MacOSX"
-        dtplatformname="macosx"
-        dtsdkname="macosx14.0"
         min_os_version="10.15"
         device_family=""
+    else 
+        echo "Unknown target: $target"
+        exit 1
     fi
 
     cat > "$plist_path" <<EOF
