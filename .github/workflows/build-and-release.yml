@@ -204,7 +204,22 @@ jobs:
     - name: Get version tag
       id: get_version
       run: |
-        VERSION=$(git describe --tags --always)
+        git fetch -a
+        LATEST_TAG=$(git tag -l "v*.*.*" | sort -V | tail -n1)
+        
+        if [ -z "$LATEST_TAG" ]; then
+          VERSION=$(git describe --tags --always)
+        else
+          COMMIT_COUNT=$(git rev-list ${LATEST_TAG}..HEAD --count)
+          SHORT_SHA=$(git rev-parse --short HEAD)
+          
+          if [ "$COMMIT_COUNT" = "0" ]; then
+            VERSION="$LATEST_TAG"
+          else
+            VERSION="${LATEST_TAG}-${COMMIT_COUNT}-${SHORT_SHA}"
+          fi
+        fi
+        
         echo "version=$VERSION" >> $GITHUB_OUTPUT
         
         if git describe --exact-match --tags HEAD >/dev/null 2>&1; then
