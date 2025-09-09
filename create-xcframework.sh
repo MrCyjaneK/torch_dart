@@ -121,19 +121,33 @@ create_framework() {
         exit 1
     fi
 
-    # Copy the dylib as the framework binary
-    cp "$dylib_path" "${framework_bundle}/${framework_name}"
-    echo "Created binary: ${framework_bundle}/${framework_name}"
-    
-    # Fix the install name to match the framework structure
-    install_name_tool -id "@rpath/${framework_name}.framework/${framework_name}" "${framework_bundle}/${framework_name}"
-    echo "Updated install name for: ${framework_bundle}/${framework_name}"
+    if [[ "$target" == "darwin" ]]; then
+        mkdir -p "${framework_bundle}/Versions/A/Resources"
+        mkdir -p "${framework_bundle}/Versions/A/Headers"
+        
+        ln -sf "A" "${framework_bundle}/Versions/Current"
+        ln -sf "Versions/Current/${framework_name}" "${framework_bundle}/${framework_name}"
+        ln -sf "Versions/Current/Resources" "${framework_bundle}/Resources"
+        ln -sf "Versions/Current/Headers" "${framework_bundle}/Headers"
+        
+        cp "$dylib_path" "${framework_bundle}/Versions/A/${framework_name}"
+        echo "Created binary: ${framework_bundle}/Versions/A/${framework_name}"
+        
+        install_name_tool -id "@rpath/${framework_name}.framework/Versions/A/${framework_name}" "${framework_bundle}/Versions/A/${framework_name}"
+        echo "Updated install name for: ${framework_bundle}/Versions/A/${framework_name}"
 
-    # Create Info.plist
-    write_info_plist "$framework_bundle" "$framework_name" "$target" "$arch"
-    
-    # Create Headers directory (empty for now, but required for framework structure)
-    mkdir -p "${framework_bundle}/Headers"
+        write_info_plist "${framework_bundle}/Versions/A/Resources" "$framework_name" "$target" "$arch"
+    else
+        cp "$dylib_path" "${framework_bundle}/${framework_name}"
+        echo "Created binary: ${framework_bundle}/${framework_name}"
+        
+        install_name_tool -id "@rpath/${framework_name}.framework/${framework_name}" "${framework_bundle}/${framework_name}"
+        echo "Updated install name for: ${framework_bundle}/${framework_name}"
+
+        write_info_plist "$framework_bundle" "$framework_name" "$target" "$arch"
+        
+        mkdir -p "${framework_bundle}/Headers"
+    fi
     
     echo "Framework created: ${framework_bundle}"
 }
@@ -236,33 +250,33 @@ fi
 if [[ "$macos_arm64_available" == true ]] || [[ "$macos_x86_64_available" == true ]]; then
     echo "Creating macOS framework..."
     MACOS_UNIVERSAL_FRAMEWORK="${MACOS_UNIVERSAL_OUT}/${FRAMEWORK_NAME}.framework"
-    mkdir -p "$MACOS_UNIVERSAL_FRAMEWORK"
+    
+    mkdir -p "${MACOS_UNIVERSAL_FRAMEWORK}/Versions/A/Resources"
+    mkdir -p "${MACOS_UNIVERSAL_FRAMEWORK}/Versions/A/Headers"
+    
+    ln -sf "A" "${MACOS_UNIVERSAL_FRAMEWORK}/Versions/Current"
+    ln -sf "Versions/Current/${FRAMEWORK_NAME}" "${MACOS_UNIVERSAL_FRAMEWORK}/${FRAMEWORK_NAME}"
+    ln -sf "Versions/Current/Resources" "${MACOS_UNIVERSAL_FRAMEWORK}/Resources"
+    ln -sf "Versions/Current/Headers" "${MACOS_UNIVERSAL_FRAMEWORK}/Headers"
 
     if [[ "$macos_arm64_available" == true ]] && [[ "$macos_x86_64_available" == true ]]; then
-        # Create universal binary using lipo
         echo "Creating universal macOS binary (arm64 + x86_64)..."
-        lipo -create "$MACOS_ARM64_DYLIB" "$MACOS_X86_64_DYLIB" -output "${MACOS_UNIVERSAL_FRAMEWORK}/${FRAMEWORK_NAME}"
-        write_info_plist "$MACOS_UNIVERSAL_FRAMEWORK" "$FRAMEWORK_NAME" "darwin" "arm64,x86_64"
+        lipo -create "$MACOS_ARM64_DYLIB" "$MACOS_X86_64_DYLIB" -output "${MACOS_UNIVERSAL_FRAMEWORK}/Versions/A/${FRAMEWORK_NAME}"
+        write_info_plist "${MACOS_UNIVERSAL_FRAMEWORK}/Versions/A/Resources" "$FRAMEWORK_NAME" "darwin" "arm64,x86_64"
     elif [[ "$macos_arm64_available" == true ]]; then
-        # Create arm64-only binary
         echo "Creating arm64-only macOS binary..."
-        cp "$MACOS_ARM64_DYLIB" "${MACOS_UNIVERSAL_FRAMEWORK}/${FRAMEWORK_NAME}"
-        write_info_plist "$MACOS_UNIVERSAL_FRAMEWORK" "$FRAMEWORK_NAME" "darwin" "arm64"
+        cp "$MACOS_ARM64_DYLIB" "${MACOS_UNIVERSAL_FRAMEWORK}/Versions/A/${FRAMEWORK_NAME}"
+        write_info_plist "${MACOS_UNIVERSAL_FRAMEWORK}/Versions/A/Resources" "$FRAMEWORK_NAME" "darwin" "arm64"
     else
-        # Create x86_64-only binary
         echo "Creating x86_64-only macOS binary..."
-        cp "$MACOS_X86_64_DYLIB" "${MACOS_UNIVERSAL_FRAMEWORK}/${FRAMEWORK_NAME}"
-        write_info_plist "$MACOS_UNIVERSAL_FRAMEWORK" "$FRAMEWORK_NAME" "darwin" "x86_64"
+        cp "$MACOS_X86_64_DYLIB" "${MACOS_UNIVERSAL_FRAMEWORK}/Versions/A/${FRAMEWORK_NAME}"
+        write_info_plist "${MACOS_UNIVERSAL_FRAMEWORK}/Versions/A/Resources" "$FRAMEWORK_NAME" "darwin" "x86_64"
     fi
 
-    echo "Created macOS binary: ${MACOS_UNIVERSAL_FRAMEWORK}/${FRAMEWORK_NAME}"
+    echo "Created macOS binary: ${MACOS_UNIVERSAL_FRAMEWORK}/Versions/A/${FRAMEWORK_NAME}"
 
-    # Fix the install name to match the framework structure
-    install_name_tool -id "@rpath/${FRAMEWORK_NAME}.framework/${FRAMEWORK_NAME}" "${MACOS_UNIVERSAL_FRAMEWORK}/${FRAMEWORK_NAME}"
-    echo "Updated install name for: ${MACOS_UNIVERSAL_FRAMEWORK}/${FRAMEWORK_NAME}"
-
-    # Create Headers directory
-    mkdir -p "${MACOS_UNIVERSAL_FRAMEWORK}/Headers"
+    install_name_tool -id "@rpath/${FRAMEWORK_NAME}.framework/Versions/A/${FRAMEWORK_NAME}" "${MACOS_UNIVERSAL_FRAMEWORK}/Versions/A/${FRAMEWORK_NAME}"
+    echo "Updated install name for: ${MACOS_UNIVERSAL_FRAMEWORK}/Versions/A/${FRAMEWORK_NAME}"
 
     echo "macOS framework created: ${MACOS_UNIVERSAL_FRAMEWORK}"
 fi

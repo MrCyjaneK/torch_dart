@@ -205,18 +205,21 @@ jobs:
       id: get_version
       run: |
         git fetch -a
-        LATEST_TAG=$(git tag -l "v*.*.*" | sort -V | tail -n1)
+        LATEST_TAG=$(git tag -l "v*.*.*" | grep -E "^v[0-9]+\.[0-9]+\.[0-9]+$" | sort -V | tail -n1)
         
         if [ -z "$LATEST_TAG" ]; then
-          VERSION=$(git describe --tags --always)
+          VERSION="v0.0.1"
         else
           COMMIT_COUNT=$(git rev-list ${LATEST_TAG}..HEAD --count)
-          SHORT_SHA=$(git rev-parse --short HEAD)
           
           if [ "$COMMIT_COUNT" = "0" ]; then
             VERSION="$LATEST_TAG"
           else
-            VERSION="${LATEST_TAG}-${COMMIT_COUNT}-${SHORT_SHA}"
+            BASE_VERSION=${LATEST_TAG#v}
+            IFS='.' read -r MAJOR MINOR PATCH <<< "$BASE_VERSION"
+            
+            NEW_PATCH=$((PATCH + COMMIT_COUNT))
+            VERSION="v${MAJOR}.${MINOR}.${NEW_PATCH}"
           fi
         fi
         
