@@ -19,8 +19,7 @@ cd "$(dirname "$0")"
 
 # Configuration
 BASE_DIR="$(pwd)"
-builder=$(go env GOOS)_$(go env GOARCH)
-DYLIB_PATH="${BASE_DIR}/simplybs/.buildlib/$builder/env"
+DYLIB_PATH="${BASE_DIR}/simplybs/.buildlib/env"
 IOS_DIR="${BASE_DIR}/ios"
 MACOS_DIR="${BASE_DIR}/macos"
 TMP_DIR="${BASE_DIR}/tmp_torch_frameworks"

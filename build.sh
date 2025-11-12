@@ -9,9 +9,9 @@ then
     cd simplybs
 else
     cd simplybs
-    git fetch -a
 fi
-git checkout 9844d6f627c8618d28d9a317cf913cfdd831ecab
+git fetch -a
+git checkout c91e7fe2a5346871d099e3de67b339203c58a4b2
 
 go run . -cleanup
 for target in "$@";
@@ -20,22 +20,18 @@ do
 done
 go run . -cleanup
 
-GOOS=$(go env GOOS)
-GOARCH=$(go env GOARCH)
-builder=${GOOS}_${GOARCH}
-
 for target in "$@";
 do
     go run . -host "$target" -extract -package torch
     if [[ "$target" == "aarch64-linux-android" ]];
     then
-        cp .buildlib/"$builder"/env/aarch64-linux-android/lib/libtorch.so ../android/src/main/jniLibs/arm64-v8a/libtorch.so
+        cp .buildlib/env/aarch64-linux-android/lib/libtorch.so ../android/src/main/jniLibs/arm64-v8a/libtorch.so
     elif [[ "$target" == "x86_64-linux-android" ]];
     then
-        cp .buildlib/"$builder"/env/x86_64-linux-android/lib/libtorch.so ../android/src/main/jniLibs/x86_64/libtorch.so
+        cp .buildlib/env/x86_64-linux-android/lib/libtorch.so ../android/src/main/jniLibs/x86_64/libtorch.so
     elif [[ "$target" == "armv7a-linux-androideabi" ]];
     then
-        cp .buildlib/"$builder"/env/armv7a-linux-androideabi/lib/libtorch.so ../android/src/main/jniLibs/armeabi-v7a/libtorch.so
+        cp .buildlib/env/armv7a-linux-androideabi/lib/libtorch.so ../android/src/main/jniLibs/armeabi-v7a/libtorch.so
     fi
 done
 
