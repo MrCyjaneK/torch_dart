@@ -11,7 +11,7 @@ else
     cd simplybs
 fi
 git fetch -a
-git checkout 2714fc694c2618b0689a823911f2f3698638e2ce
+git checkout 4be941acdf7fe85ca011f6ab356fb211b5aeb69c
 
 go run . -cleanup
 for target in "$@";
