@@ -12,7 +12,7 @@ permissions:
 
 jobs:
   build-android:
-    runs-on: macos-latest
+    runs-on: ubuntu-latest
     strategy:
       matrix:
         target:
@@ -69,13 +69,66 @@ jobs:
           path: artifacts/${{ matrix.target }}/
           retention-days: 1
 
-  build-apple:
-    runs-on: macos-latest
+  build-apple-darwin:
+    runs-on: ubuntu-latest
     strategy:
       matrix:
         target:
           - aarch64-apple-darwin
           - x86_64-apple-darwin
+
+    steps:
+      - name: Free Disk Space (Ubuntu)
+        uses: jlumbroso/free-disk-space@main
+        with:
+          tool-cache: true
+          android: true
+          dotnet: true
+          haskell: true
+          large-packages: true
+          docker-images: true
+          swap-storage: true
+
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: "stable"
+      - name: Install dependencies
+        run: |
+          sudo apt update
+          sudo apt install clang llvm gcc g++
+      - name: Clone simplybs
+        run: |
+          git clone https://github.com/MrCyjaneK/simplybs
+
+      - name: Cache simplybs buildlib
+        uses: actions/cache@v4
+        with:
+          path: simplybs/.buildlib/built
+          key: simplybs-buildlib-${{ matrix.target }}..${{ hashFiles('simplybs/') }}
+          restore-keys: |
+            simplybs-buildlib-${{ matrix.target }}..
+
+      - name: Build ${{ matrix.target }}
+        run: |
+          ./build.sh ${{ matrix.target }}
+
+      - name: Upload Apple build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: apple-build-${{ matrix.target }}
+          path: |
+            simplybs/.buildlib/env/${{ matrix.target }}/lib/libtorch.dylib
+          retention-days: 1
+
+  build-apple-ios:
+    runs-on: macos-latest
+    strategy:
+      matrix:
+        target:
           - aarch64-apple-ios
           - aarch64-apple-ios-simulator
 
@@ -113,7 +166,9 @@ jobs:
 
   create-apple-frameworks:
     runs-on: macos-latest
-    needs: build-apple
+    needs:
+      - build-apple-ios
+      - build-apple-darwin
 
     steps:
       - name: Checkout repository
