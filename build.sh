@@ -11,15 +11,18 @@ else
     cd simplybs
 fi
 git fetch -a
-git checkout 36d70ab157af1ed51b60a01c771b9f92794afd78
+git checkout cf90b2860f1946b2c13cf4f44226fb3bb67c1569
 
-if [[ "x$SIMPLYBS_DOWNLOAD_FIRST" == "xyes" ]];
-then
-    for dep in $(go run . -host x86_64-apple-darwin -package tor -list | awk '{ print $2 }');
-    do
-        go run . -host "$target" -download -package $dep
-    done
-fi
+for target in "$@";
+do
+    if [[ "x$SIMPLYBS_DOWNLOAD_FIRST" == "xyes" ]];
+    then
+        for dep in $(go run . -host $target -package torch -list | awk '{ print $2 }');
+        do
+            go run . -host "$target" -download -package $dep
+        done
+    fi
+done
 
 go run . -cleanup
 for target in "$@";
@@ -44,6 +47,10 @@ do
 done
 
 # shellcheck disable=SC2199
+if [[ "x$SKIP_XC" == "xyes" ]];
+then
+    exit 0
+fi
 if [[ "$@" == *"-apple-"* ]];
 then
     pushd ..
