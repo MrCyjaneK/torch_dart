@@ -192,29 +192,26 @@ jobs:
 
       - name: Restore Apple dylibs to correct locations
         run: |
-          GOOS=$(go env GOOS)
-          GOARCH=$(go env GOARCH)
-          builder=${GOOS}_${GOARCH}
-
+          set -x
           # Initialize simplybs directory structure
           git clone https://github.com/MrCyjaneK/simplybs || true
           cd simplybs
           git checkout 7e67cde682cf6b8dfbbb8b82511c0c4dd70f9dcc
           cd ..
 
-          mkdir -p simplybs/.buildlib/$builder/env
+          mkdir -p simplybs/.buildlib/env
 
           for target in aarch64-apple-darwin x86_64-apple-darwin; do
-            mkdir -p simplybs/.buildlib/$builder/env/$target/lib
+            mkdir -p simplybs/.buildlib/env/$target/lib
             if [ -f apple-build-artifacts/apple-build-$target/libtorch.dylib ]; then
-              cp apple-build-artifacts/apple-build-$target/libtorch.dylib simplybs/.buildlib/$builder/env/$target/lib/
+              cp apple-build-artifacts/apple-build-$target/libtorch.dylib simplybs/.buildlib/env/$target/lib/
             fi
           done
 
           for target in aarch64-apple-ios aarch64-apple-ios-simulator; do
-            mkdir -p simplybs/.buildlib/$builder/env/$target/lib
+            mkdir -p simplybs/.buildlib/env/$target/lib
             if [ -f ios-build-artifacts/ios-build-$target/libtorch.dylib ]; then
-              cp ios-build-artifacts/ios-build-$target/libtorch.dylib simplybs/.buildlib/$builder/env/$target/lib/
+              cp ios-build-artifacts/ios-build-$target/libtorch.dylib simplybs/.buildlib/env/$target/lib/
             fi
           done
 
