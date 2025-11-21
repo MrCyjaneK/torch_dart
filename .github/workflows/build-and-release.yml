@@ -37,7 +37,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: simplybs/.buildlib/linux_amd64/built
-          key: simplybs-buildlib-${{ matrix.target }}..${{ hashFiles('simplybs/') }}
+          key: simplybs-buildlib-${{ matrix.target }}..${{ hashFiles('build.sh') }}
           restore-keys: |
             simplybs-buildlib-${{ matrix.target }}..
 
@@ -108,7 +108,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: simplybs/.buildlib/linux_amd64/built
-          key: simplybs-buildlib-${{ matrix.target }}..${{ hashFiles('simplybs/') }}
+          key: simplybs-buildlib-${{ matrix.target }}..${{ hashFiles('build.sh') }}
           restore-keys: |
             simplybs-buildlib-${{ matrix.target }}..
 
@@ -153,7 +153,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: simplybs/.buildlib/darwin_arm64/built
-          key: simplybs-buildlib-${{ matrix.target }}..${{ hashFiles('simplybs/') }}
+          key: simplybs-buildlib-${{ matrix.target }}..${{ hashFiles('build.sh') }}
           restore-keys: |
             simplybs-buildlib-${{ matrix.target }}..
 
