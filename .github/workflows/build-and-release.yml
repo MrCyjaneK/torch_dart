@@ -43,7 +43,7 @@ jobs:
 
       - name: Build ${{ matrix.target }}
         run: |
-          SIMPLYBS_DOWNLOAD_FIRST=yes ./build.sh ${{ matrix.target }}
+          ./build.sh ${{ matrix.target }}
 
       - name: Extract built libraries
         run: |
@@ -112,6 +112,11 @@ jobs:
           restore-keys: |
             simplybs-buildlib-${{ matrix.target }}..
 
+      - name: Download Xcode
+        run: |
+          mkdir -p simplybs/.buildlib/source/download.developer.apple.com/Developer_Tools/Xcode_26.1/
+          wget --retry-connrefused --tries=20 --waitretry=5 --continue --user-agent="Go-http-client/2.0" -O simplybs/.buildlib/source/download.developer.apple.com/Developer_Tools/Xcode_26.1/XcodeXIP_26.1_Universal.xip https://static.mrcyjanek.net/lfs/simplybs/source/download.developer.apple.com/Developer_Tools/Xcode_26.1/XcodeXIP_26.1_Universal.xip
+
       - name: Build ${{ matrix.target }}
         run: |
           SIMPLYBS_DOWNLOAD_FIRST=yes ./build.sh ${{ matrix.target }}
@@ -154,7 +159,7 @@ jobs:
 
       - name: Build ${{ matrix.target }}
         run: |
-          SIMPLYBS_DOWNLOAD_FIRST=yes ./build.sh ${{ matrix.target }}
+          ./build.sh ${{ matrix.target }}
 
       - name: Upload Apple build artifacts
         uses: actions/upload-artifact@v4
