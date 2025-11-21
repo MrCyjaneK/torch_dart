@@ -11,7 +11,15 @@ else
     cd simplybs
 fi
 git fetch -a
-git checkout 4be941acdf7fe85ca011f6ab356fb211b5aeb69c
+git checkout 36d70ab157af1ed51b60a01c771b9f92794afd78
+
+if [[ "x$SIMPLYBS_DOWNLOAD_FIRST" == "xyes" ]];
+then
+    for dep in $(go run . -host x86_64-apple-darwin -package tor -list | awk '{ print $2 }');
+    do
+        go run . -host "$target" -download -package $dep
+    done
+fi
 
 go run . -cleanup
 for target in "$@";
