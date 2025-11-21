@@ -164,7 +164,7 @@ jobs:
       - name: Upload Apple build artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: apple-build-${{ matrix.target }}
+          name: ios-build-${{ matrix.target }}
           path: |
             simplybs/.buildlib/env/${{ matrix.target }}/lib/libtorch.dylib
           retention-days: 1
@@ -187,6 +187,13 @@ jobs:
       - name: Download all Apple build artifacts
         uses: actions/download-artifact@v4
         with:
+          pattern: ios-build-*
+          path: ios-build-artifacts/
+          merge-multiple: false
+
+      - name: Download all Apple build artifacts
+        uses: actions/download-artifact@v4
+        with:
           pattern: apple-build-*
           path: apple-build-artifacts/
           merge-multiple: false
@@ -205,11 +212,17 @@ jobs:
 
           mkdir -p simplybs/.buildlib/$builder/env
 
-          # Restore dylibs from artifacts
-          for target in aarch64-apple-darwin x86_64-apple-darwin aarch64-apple-ios aarch64-apple-ios-simulator; do
+          for target in aarch64-apple-darwin x86_64-apple-darwin; do
             mkdir -p simplybs/.buildlib/$builder/env/$target/lib
             if [ -f apple-build-artifacts/apple-build-$target/libtorch.dylib ]; then
               cp apple-build-artifacts/apple-build-$target/libtorch.dylib simplybs/.buildlib/$builder/env/$target/lib/
+            fi
+          done
+
+          for target in aarch64-apple-ios aarch64-apple-ios-simulator; do
+            mkdir -p simplybs/.buildlib/$builder/env/$target/lib
+            if [ -f ios-build-artifacts/ios-build-$target/libtorch.dylib ]; then
+              cp ios-build-artifacts/ios-build-$target/libtorch.dylib simplybs/.buildlib/$builder/env/$target/lib/
             fi
           done
 
