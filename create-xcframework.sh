@@ -19,7 +19,7 @@ cd "$(dirname "$0")"
 
 # Configuration
 BASE_DIR="$(pwd)"
-DYLIB_PATH="${BASE_DIR}/simplybs/.buildlib/env"
+DYLIB_PATH="${BASE_DIR:-$SIMPLYBS_ENV_DIR}/simplybs/.buildlib/env"
 IOS_DIR="${BASE_DIR}/ios"
 MACOS_DIR="${BASE_DIR}/macos"
 TMP_DIR="${BASE_DIR}/tmp_torch_frameworks"
