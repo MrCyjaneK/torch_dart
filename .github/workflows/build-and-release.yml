@@ -13,6 +13,9 @@ permissions:
 jobs:
   build-android:
     runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ github.token }}
+
     strategy:
       matrix:
         target:
@@ -69,6 +72,8 @@ jobs:
 
   build-apple-darwin:
     runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ github.token }}
     strategy:
       matrix:
         target:
@@ -91,7 +96,7 @@ jobs:
         run: git clone https://github.com/MrCyjaneK/simplybs
 
       - name: Build ${{ matrix.target }}
-        run: timeout 5h SKIP_XC=yes SIMPLYBS_DOWNLOAD_FIRST=yes ./build.sh ${{ matrix.target }} || true
+        run: timeout 5h env SKIP_XC=yes SIMPLYBS_DOWNLOAD_FIRST=yes ./build.sh ${{ matrix.target }} || true
 
       - name: Upload Apple artifacts individually
         run: |
@@ -116,12 +121,14 @@ jobs:
           done
 
   build-apple-ios:
-    runs-on: macos-latest
+    runs-on: ubuntu-latest
     strategy:
       matrix:
         target:
           - aarch64-apple-ios
           - aarch64-apple-ios-simulator
+    env:
+      GH_TOKEN: ${{ github.token }}
 
     steps:
       - name: Checkout repository
@@ -161,8 +168,9 @@ jobs:
           done
 
   create-apple-frameworks:
-    runs-on: macos-latest
+    runs-on: ubuntu-latest
     needs: [build-apple-darwin, build-apple-ios]
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -174,12 +182,13 @@ jobs:
 
       - name: Restore Apple build artifacts
         run: |
-          mkdir -p simplybs/.buildlib/darwin_arm64/built
+          builder=$(go env GOOS)_$(go env GOARCH)
+          mkdir -p simplybs/.buildlib/$builder/built
           for TARGET in aarch64-apple-darwin x86_64-apple-darwin aarch64-apple-ios aarch64-apple-ios-simulator; do
-            RELEASE_NAME="darwin_arm64-${TARGET}-cache"
+            RELEASE_NAME="$builder-${TARGET}-cache"
             if gh release view "$RELEASE_NAME" >/dev/null 2>&1; then
               gh release view "$RELEASE_NAME" --json assets -q '.assets[].name' | while read FILE; do
-                gh release download "$RELEASE_NAME" -p "$FILE" -D "simplybs/.buildlib/darwin_arm64/built/$TARGET/"
+                gh release download "$RELEASE_NAME" -p "$FILE" -D "simplybs/.buildlib/$builder/built/$TARGET/"
               done
             fi
           done
@@ -195,7 +204,6 @@ jobs:
             ios/LibTorch.xcframework/
             macos/LibTorch.xcframework/
           retention-days: 1
-
   assemble-and-release:
     runs-on: ubuntu-latest
     needs: [build-android, create-apple-frameworks]
@@ -287,4 +295,5 @@ jobs:
             - iOS XCFramework (device + simulator)
             - macOS XCFramework (universal arm64 + x86_64)
         env:
+          GH_TOKEN: ${{ github.token }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
