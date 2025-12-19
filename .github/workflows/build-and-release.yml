@@ -12,7 +12,9 @@ permissions:
 
 jobs:
   build-android:
-    runs-on: ubuntu-latest
+    container:
+      image: catthehacker/ubuntu:act-22.04
+    runs-on: self-hosted
     env:
       GH_TOKEN: ${{ github.token }}
 
@@ -24,56 +26,40 @@ jobs:
           - armv7a-linux-androideabi
 
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Set up Go
-        uses: actions/setup-go@v5
+      - uses: actions/setup-go@v5
         with:
           go-version: stable
-
+      - run: sudo apt update && sudo apt install -y clang llvm gcc g++
       - name: Clone simplybs
         run: git clone https://github.com/MrCyjaneK/simplybs
 
+      - name: Cache simplybs
+        uses: actions/cache@v4
+        with:
+          path: simplybs/.buildlib/linux_amd64/built
+          key: ${{ runner.os }}-android-${{ matrix.target }}-${{ github.run_id }}
+          restore-keys: |
+            ${{ runner.os }}-android-${{ matrix.target }}-
+
       - name: Build ${{ matrix.target }}
-        run: timeout 5h ./build.sh ${{ matrix.target }} || true
+        run: timeout 5h ./build.sh ${{ matrix.target }}
 
-      - name: Upload Android artifacts individually
-        run: |
-          GOOS=$(go env GOOS)
-          GOARCH=$(go env GOARCH)
-          BUILDER="${GOOS}_${GOARCH}"
-          RELEASE_NAME="${BUILDER}-${{ matrix.target }}-cache"
-          ART_DIR="simplybs/.buildlib/${BUILDER}/built/${{ matrix.target }}"
-
-          mkdir -p "$ART_DIR"
-
-          # Determine .so location
-          if [[ "${{ matrix.target }}" == "aarch64-linux-android" ]]; then
-            cp android/src/main/jniLibs/arm64-v8a/libtorch.so "$ART_DIR/"
-          elif [[ "${{ matrix.target }}" == "x86_64-linux-android" ]]; then
-            cp android/src/main/jniLibs/x86_64/libtorch.so "$ART_DIR/"
-          elif [[ "${{ matrix.target }}" == "armv7a-linux-androideabi" ]]; then
-            cp android/src/main/jniLibs/armeabi-v7a/libtorch.so "$ART_DIR/"
-          fi
-
-          # Create release if missing
-          if ! gh release view "$RELEASE_NAME" >/dev/null 2>&1; then
-            gh release create "$RELEASE_NAME" --prerelease --notes "Android cache for $RELEASE_NAME"
-          fi
-
-          # Upload files individually
-          find "$ART_DIR" -type f | while read -r FILE; do
-            BASENAME=$(basename "$FILE")
-            if ! gh release view "$RELEASE_NAME" --json assets -q ".assets[].name" | grep -qx "$BASENAME"; then
-              gh release upload "$RELEASE_NAME" "$FILE"
-            fi
-          done
+      - name: Upload Android artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-${{ matrix.target }}
+          path: simplybs/.buildlib/linux_amd64/built/${{ matrix.target }}/
+          retention-days: 1
 
   build-apple-darwin:
-    runs-on: ubuntu-latest
+    container:
+      image: catthehacker/ubuntu:act-22.04
+    runs-on: self-hosted
     env:
       GH_TOKEN: ${{ github.token }}
+
     strategy:
       matrix:
         target:
@@ -81,117 +67,102 @@ jobs:
           - x86_64-apple-darwin
 
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Set up Go
-        uses: actions/setup-go@v5
+      - uses: actions/setup-go@v5
         with:
           go-version: stable
 
-      - name: Install build dependencies
-        run: sudo apt update && sudo apt install -y clang llvm gcc g++
+      - run: sudo apt update && sudo apt install -y clang llvm gcc g++
 
       - name: Clone simplybs
         run: git clone https://github.com/MrCyjaneK/simplybs
 
+      - name: Cache simplybs
+        uses: actions/cache@v4
+        with:
+          path: simplybs/.buildlib/linux_amd64/built
+          key: ${{ runner.os }}-darwin-${{ matrix.target }}-${{ github.run_id }}
+          restore-keys: |
+            ${{ runner.os }}-darwin-${{ matrix.target }}-
+
       - name: Build ${{ matrix.target }}
         run: timeout 5h env SKIP_XC=yes SIMPLYBS_DOWNLOAD_FIRST=yes ./build.sh ${{ matrix.target }} || true
 
-      - name: Upload Apple artifacts individually
-        run: |
-          GOOS=$(go env GOOS)
-          GOARCH=$(go env GOARCH)
-          BUILDER="${GOOS}_${GOARCH}"
-          RELEASE_NAME="${BUILDER}-${{ matrix.target }}-cache"
-          ART_DIR="simplybs/.buildlib/${BUILDER}/built/${{ matrix.target }}"
-
-          mkdir -p "$ART_DIR"
-          cp simplybs/.buildlib/env/${{ matrix.target }}/lib/libtorch.dylib "$ART_DIR/"
-
-          if ! gh release view "$RELEASE_NAME" >/dev/null 2>&1; then
-            gh release create "$RELEASE_NAME" --prerelease --notes "Apple cache for $RELEASE_NAME"
-          fi
-
-          find "$ART_DIR" -type f | while read -r FILE; do
-            BASENAME=$(basename "$FILE")
-            if ! gh release view "$RELEASE_NAME" --json assets -q ".assets[].name" | grep -qx "$BASENAME"; then
-              gh release upload "$RELEASE_NAME" "$FILE"
-            fi
-          done
+      - name: Upload Apple Darwin artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: apple-darwin-${{ matrix.target }}
+          path: simplybs/.buildlib/linux_amd64/built/${{ matrix.target }}/
+          retention-days: 1
 
   build-apple-ios:
-    runs-on: ubuntu-latest
+    container:
+      image: catthehacker/ubuntu:act-22.04
+    runs-on: self-hosted
+    env:
+      GH_TOKEN: ${{ github.token }}
+
     strategy:
       matrix:
         target:
           - aarch64-apple-ios
           - aarch64-apple-ios-simulator
-    env:
-      GH_TOKEN: ${{ github.token }}
 
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Set up Go
-        uses: actions/setup-go@v5
+      - uses: actions/setup-go@v5
         with:
           go-version: stable
+
+      - run: sudo apt update && sudo apt install -y clang llvm gcc g++
 
       - name: Clone simplybs
         run: git clone https://github.com/MrCyjaneK/simplybs
 
+      - name: Cache simplybs
+        uses: actions/cache@v4
+        with:
+          path: simplybs/.buildlib/linux_amd64/built
+          key: ${{ runner.os }}-ios-${{ matrix.target }}-${{ github.run_id }}
+          restore-keys: |
+            ${{ runner.os }}-ios-${{ matrix.target }}-
+
       - name: Build ${{ matrix.target }}
-        run: timeout 5h ./build.sh ${{ matrix.target }} || true
+        run: ./build.sh ${{ matrix.target }}
 
-      - name: Upload iOS artifacts individually
-        run: |
-          GOOS=$(go env GOOS)
-          GOARCH=$(go env GOARCH)
-          BUILDER="${GOOS}_${GOARCH}"
-          RELEASE_NAME="${BUILDER}-${{ matrix.target }}-cache"
-          ART_DIR="simplybs/.buildlib/${BUILDER}/built/${{ matrix.target }}"
-
-          mkdir -p "$ART_DIR"
-          cp simplybs/.buildlib/env/${{ matrix.target }}/lib/libtorch.dylib "$ART_DIR/"
-
-          if ! gh release view "$RELEASE_NAME" >/dev/null 2>&1; then
-            gh release create "$RELEASE_NAME" --prerelease --notes "iOS cache for $RELEASE_NAME"
-          fi
-
-          find "$ART_DIR" -type f | while read -r FILE; do
-            BASENAME=$(basename "$FILE")
-            if ! gh release view "$RELEASE_NAME" --json assets -q ".assets[].name" | grep -qx "$BASENAME"; then
-              gh release upload "$RELEASE_NAME" "$FILE"
-            fi
-          done
+      - name: Upload Apple iOS artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: apple-ios-${{ matrix.target }}
+          path: simplybs/.buildlib/linux_amd64/built/${{ matrix.target }}/
+          retention-days: 1
 
   create-apple-frameworks:
-    runs-on: ubuntu-latest
+    container:
+      image: catthehacker/ubuntu:act-22.04
+    runs-on: self-hosted
     needs: [build-apple-darwin, build-apple-ios]
 
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Set up Go
-        uses: actions/setup-go@v5
+      - uses: actions/setup-go@v5
         with:
           go-version: stable
 
-      - name: Restore Apple build artifacts
+      - run: sudo apt update && sudo apt install -y clang llvm gcc g++
+
+      - name: Download Apple artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: simplybs/.buildlib/linux_amd64/built
+
+      - name: Normalize artifact layout
         run: |
-          builder=$(go env GOOS)_$(go env GOARCH)
-          mkdir -p simplybs/.buildlib/$builder/built
-          for TARGET in aarch64-apple-darwin x86_64-apple-darwin aarch64-apple-ios aarch64-apple-ios-simulator; do
-            RELEASE_NAME="$builder-${TARGET}-cache"
-            if gh release view "$RELEASE_NAME" >/dev/null 2>&1; then
-              gh release view "$RELEASE_NAME" --json assets -q '.assets[].name' | while read FILE; do
-                gh release download "$RELEASE_NAME" -p "$FILE" -D "simplybs/.buildlib/$builder/built/$TARGET/"
-              done
-            fi
-          done
+          cd simplybs/.buildlib/linux_amd64/built
+          for d in */; do mv "$d"* . && rmdir "$d"; done
 
       - name: Create XCFrameworks
         run: ./create-xcframework.sh
@@ -204,29 +175,28 @@ jobs:
             ios/LibTorch.xcframework/
             macos/LibTorch.xcframework/
           retention-days: 1
+
   assemble-and-release:
     runs-on: ubuntu-latest
     needs: [build-android, create-apple-frameworks]
     if: always()
+
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - name: Restore Android artifacts
-        run: |
-          mkdir -p simplybs/.buildlib/linux_amd64/built
-          for TARGET in aarch64-linux-android x86_64-linux-android armv7a-linux-androideabi; do
-            RELEASE_NAME="linux_amd64-${TARGET}-cache"
-            if gh release view "$RELEASE_NAME" >/dev/null 2>&1; then
-              gh release view "$RELEASE_NAME" --json assets -q '.assets[].name' | while read FILE; do
-                gh release download "$RELEASE_NAME" -p "$FILE" -D "simplybs/.buildlib/linux_amd64/built/$TARGET/"
-              done
-            fi
-          done
+      - name: Download Android artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: simplybs/.buildlib/linux_amd64/built
 
-      - name: Restore Apple frameworks
+      - name: Normalize Android artifacts
+        run: |
+          cd simplybs/.buildlib/linux_amd64/built
+          for d in */; do mv "$d"* . && rmdir "$d"; done
+
+      - name: Download Apple frameworks
         uses: actions/download-artifact@v4
         with:
           name: apple-frameworks
@@ -241,20 +211,14 @@ jobs:
           cp -r apple-artifacts/ios/LibTorch.xcframework ios/
           cp -r apple-artifacts/macos/LibTorch.xcframework macos/
 
-          rm -rf apple-artifacts
-
       - name: Get version tag
         id: get_version
         run: |
           git fetch --tags
           LATEST_TAG=$(git tag -l "v*.*.*" | sort -V | tail -n1)
-          if [ -z "$LATEST_TAG" ]; then
-            VERSION=v0.0.1
-          else
+          if [ -z "$LATEST_TAG" ]; then VERSION=v0.0.1; else
             COMMIT_COUNT=$(git rev-list ${LATEST_TAG}..HEAD --count)
-            if [ "$COMMIT_COUNT" = "0" ]; then
-              VERSION="$LATEST_TAG"
-            else
+            if [ "$COMMIT_COUNT" = "0" ]; then VERSION="$LATEST_TAG"; else
               IFS='.' read -r MAJOR MINOR PATCH <<< "${LATEST_TAG#v}"
               PATCH=$((PATCH + COMMIT_COUNT))
               VERSION="v${MAJOR}.${MINOR}.${PATCH}"
@@ -271,8 +235,7 @@ jobs:
 
       - name: Create Release Tarball
         run: |
-          tar -czf ../torch_dart-${{ steps.get_version.outputs.version }}.tar.gz --exclude='.git' .
-          mv ../torch_dart-${{ steps.get_version.outputs.version }}.tar.gz .
+          tar -czf torch_dart-${{ steps.get_version.outputs.version }}.tar.gz .
 
       - name: Publish GitHub Release
         if: github.ref == 'refs/heads/master' && github.event_name == 'push'
@@ -283,17 +246,5 @@ jobs:
           prerelease: ${{ steps.get_version.outputs.is_prerelease }}
           files: torch_dart-${{ steps.get_version.outputs.version }}.tar.gz
           generate_release_notes: true
-          body: |
-            ## Built Targets
-
-            ### Android
-            - aarch64-linux-android → arm64-v8a/libtorch.so
-            - x86_64-linux-android → x86_64/libtorch.so
-            - armv7a-linux-androideabi → armeabi-v7a/libtorch.so
-
-            ### Apple
-            - iOS XCFramework (device + simulator)
-            - macOS XCFramework (universal arm64 + x86_64)
         env:
-          GH_TOKEN: ${{ github.token }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
