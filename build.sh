@@ -24,12 +24,12 @@ do
     fi
 done
 
-go run . -cleanup
+# go run . -cleanup
 for target in "$@";
 do
     go run . -host "$target" -build -package torch
 done
-go run . -cleanup
+# go run . -cleanup
 
 for target in "$@";
 do

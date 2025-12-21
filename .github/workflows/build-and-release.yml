@@ -44,7 +44,7 @@ jobs:
             ${{ runner.os }}-android-${{ matrix.target }}-
 
       - name: Build ${{ matrix.target }}
-        run: timeout 5h ./build.sh ${{ matrix.target }}
+        run: ./build.sh ${{ matrix.target }}
 
       - name: Upload Android artifact
         uses: actions/upload-artifact@v4
@@ -87,7 +87,7 @@ jobs:
             ${{ runner.os }}-darwin-${{ matrix.target }}-
 
       - name: Build ${{ matrix.target }}
-        run: timeout 5h env SKIP_XC=yes SIMPLYBS_DOWNLOAD_FIRST=yes ./build.sh ${{ matrix.target }} || true
+        run: env SKIP_XC=yes SIMPLYBS_DOWNLOAD_FIRST=yes ./build.sh ${{ matrix.target }}
 
       - name: Upload Apple Darwin artifact
         uses: actions/upload-artifact@v4
