@@ -46,6 +46,8 @@ jobs:
       - name: Build ${{ matrix.target }}
         run: ./build.sh ${{ matrix.target }}
 
+      - run: rm -rf simplybs/.buildlib/env/${{ matrix.target }}/native
+
       - name: Upload Android artifact
         uses: actions/upload-artifact@v4
         with:
@@ -89,6 +91,8 @@ jobs:
       - name: Build ${{ matrix.target }}
         run: env SKIP_XC=yes ./build.sh ${{ matrix.target }}
 
+      - run: rm -rf simplybs/.buildlib/env/${{ matrix.target }}/native
+
       - name: Upload Apple Darwin artifact
         uses: actions/upload-artifact@v4
         with:
@@ -131,6 +135,8 @@ jobs:
 
       - name: Build ${{ matrix.target }}
         run: env SKIP_XC=yes ./build.sh ${{ matrix.target }}
+
+      - run: rm -rf simplybs/.buildlib/env/${{ matrix.target }}/native
 
       - name: Upload Apple iOS artifact
         uses: actions/upload-artifact@v4
