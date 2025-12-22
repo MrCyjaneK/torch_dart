@@ -82,9 +82,9 @@ jobs:
         uses: actions/cache@v4
         with:
           path: simplybs/.buildlib/linux_amd64/built
-          key: ${{ runner.os }}-darwin-${{ matrix.target }}-${{ github.run_id }}
+          key: ${{ runner.os }}-darwin-${{ matrix.target }}AA-${{ github.run_id }}
           restore-keys: |
-            ${{ runner.os }}-darwin-${{ matrix.target }}-
+            ${{ runner.os }}-darwin-${{ matrix.target }}AA-
 
       - name: Build ${{ matrix.target }}
         run: env SKIP_XC=yes ./build.sh ${{ matrix.target }}
@@ -125,9 +125,9 @@ jobs:
         uses: actions/cache@v4
         with:
           path: simplybs/.buildlib/linux_amd64/built
-          key: ${{ runner.os }}-ios-${{ matrix.target }}-${{ github.run_id }}
+          key: ${{ runner.os }}-ios-${{ matrix.target }}AA-${{ github.run_id }}
           restore-keys: |
-            ${{ runner.os }}-ios-${{ matrix.target }}-
+            ${{ runner.os }}-ios-${{ matrix.target }}AA-
 
       - name: Build ${{ matrix.target }}
         run: env SKIP_XC=yes ./build.sh ${{ matrix.target }}
