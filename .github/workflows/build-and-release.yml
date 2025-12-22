@@ -50,7 +50,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: android-${{ matrix.target }}
-          path: simplybs/.buildlib/linux_amd64/built/${{ matrix.target }}/
+          path: simplybs/.buildlib/env/${{ matrix.target }}/
           retention-days: 1
 
   build-apple-darwin:
@@ -87,13 +87,13 @@ jobs:
             ${{ runner.os }}-darwin-${{ matrix.target }}-
 
       - name: Build ${{ matrix.target }}
-        run: env SKIP_XC=yes SIMPLYBS_DOWNLOAD_FIRST=yes ./build.sh ${{ matrix.target }}
+        run: env SKIP_XC=yes ./build.sh ${{ matrix.target }}
 
       - name: Upload Apple Darwin artifact
         uses: actions/upload-artifact@v4
         with:
           name: apple-darwin-${{ matrix.target }}
-          path: simplybs/.buildlib/linux_amd64/built/${{ matrix.target }}/
+          path: simplybs/.buildlib/env/${{ matrix.target }}/
           retention-days: 1
 
   build-apple-ios:
@@ -130,13 +130,13 @@ jobs:
             ${{ runner.os }}-ios-${{ matrix.target }}-
 
       - name: Build ${{ matrix.target }}
-        run: env SKIP_XC=yes SIMPLYBS_DOWNLOAD_FIRST=yes ./build.sh ${{ matrix.target }}
+        run: env SKIP_XC=yes ./build.sh ${{ matrix.target }}
 
       - name: Upload Apple iOS artifact
         uses: actions/upload-artifact@v4
         with:
           name: apple-ios-${{ matrix.target }}
-          path: simplybs/.buildlib/linux_amd64/built/${{ matrix.target }}/
+          path: simplybs/.buildlib/env/${{ matrix.target }}/
           retention-days: 1
 
   create-apple-frameworks:
@@ -153,11 +153,11 @@ jobs:
       - name: Download Apple artifacts
         uses: actions/download-artifact@v4
         with:
-          path: simplybs/.buildlib/linux_amd64/built
+          path: simplybs/.buildlib/linux_amd64/env
 
       - name: Normalize artifact layout
         run: |
-          cd simplybs/.buildlib/linux_amd64/built
+          cd simplybs/.buildlib/linux_amd64/env
           for d in */; do mv "$d"* . && rmdir "$d"; done
 
       - name: Linux -> macos
@@ -189,11 +189,11 @@ jobs:
       - name: Download Android artifacts
         uses: actions/download-artifact@v4
         with:
-          path: simplybs/.buildlib/linux_amd64/built
+          path: simplybs/.buildlib/env
 
       - name: Normalize Android artifacts
         run: |
-          cd simplybs/.buildlib/linux_amd64/built
+          cd simplybs/.buildlib/env
           for d in */; do mv "$d"* . && rmdir "$d"; done
 
       - name: Download Apple frameworks
@@ -204,9 +204,9 @@ jobs:
 
       - name: Assemble final package
         run: |
-          cp simplybs/.buildlib/linux_amd64/built/aarch64-linux-android/libtorch.so android/src/main/jniLibs/arm64-v8a/
-          cp simplybs/.buildlib/linux_amd64/built/x86_64-linux-android/libtorch.so android/src/main/jniLibs/x86_64/
-          cp simplybs/.buildlib/linux_amd64/built/armv7a-linux-androideabi/libtorch.so android/src/main/jniLibs/armeabi-v7a/
+          cp simplybs/.buildlib/env/aarch64-linux-android/libtorch.so android/src/main/jniLibs/arm64-v8a/
+          cp simplybs/.buildlib/env/x86_64-linux-android/libtorch.so android/src/main/jniLibs/x86_64/
+          cp simplybs/.buildlib/env/armv7a-linux-androideabi/libtorch.so android/src/main/jniLibs/armeabi-v7a/
 
           cp -r apple-artifacts/ios/LibTorch.xcframework ios/
           cp -r apple-artifacts/macos/LibTorch.xcframework macos/
