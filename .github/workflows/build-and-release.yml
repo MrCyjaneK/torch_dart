@@ -130,7 +130,7 @@ jobs:
             ${{ runner.os }}-ios-${{ matrix.target }}-
 
       - name: Build ${{ matrix.target }}
-        run: ./build.sh ${{ matrix.target }}
+        run: env SKIP_XC=yes SIMPLYBS_DOWNLOAD_FIRST=yes ./build.sh ${{ matrix.target }}
 
       - name: Upload Apple iOS artifact
         uses: actions/upload-artifact@v4
@@ -140,9 +140,7 @@ jobs:
           retention-days: 1
 
   create-apple-frameworks:
-    container:
-      image: catthehacker/ubuntu:act-22.04
-    runs-on: self-hosted
+    runs-on: macos-latest
     needs: [build-apple-darwin, build-apple-ios]
 
     steps:
@@ -151,8 +149,6 @@ jobs:
       - uses: actions/setup-go@v5
         with:
           go-version: stable
-
-      - run: sudo apt update && sudo apt install -y clang llvm gcc g++
 
       - name: Download Apple artifacts
         uses: actions/download-artifact@v4
@@ -163,6 +159,10 @@ jobs:
         run: |
           cd simplybs/.buildlib/linux_amd64/built
           for d in */; do mv "$d"* . && rmdir "$d"; done
+
+      - name: Linux -> macos
+        run: |
+          cp -a simplybs/.buildlib/linux_amd64 simplybs/.buildlib/darwin_amd64
 
       - name: Create XCFrameworks
         run: ./create-xcframework.sh
