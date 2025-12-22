@@ -136,7 +136,8 @@ create_framework() {
         cp "$dylib_path" "${framework_bundle}/Versions/A/${framework_name}"
         echo "Created binary: ${framework_bundle}/Versions/A/${framework_name}"
         
-        install_name_tool -id "@rpath/${framework_name}.framework/Versions/A/${framework_name}" "${framework_bundle}/Versions/A/${framework_name}"
+        install_name_tool=$(ls ./simplybs/.buildlib/env/*/native/bin/install_name_tool | head -1)
+        $install_name_tool -id "@rpath/${framework_name}.framework/Versions/A/${framework_name}" "${framework_bundle}/Versions/A/${framework_name}"
         echo "Updated install name for: ${framework_bundle}/Versions/A/${framework_name}"
 
         write_info_plist "${framework_bundle}/Versions/A/Resources" "$framework_name" "$target" "$arch"
@@ -144,7 +145,8 @@ create_framework() {
         cp "$dylib_path" "${framework_bundle}/${framework_name}"
         echo "Created binary: ${framework_bundle}/${framework_name}"
         
-        install_name_tool -id "@rpath/${framework_name}.framework/${framework_name}" "${framework_bundle}/${framework_name}"
+        install_name_tool=$(ls ./simplybs/.buildlib/env/*/native/bin/install_name_tool | head -1)
+        $install_name_tool -id "@rpath/${framework_name}.framework/${framework_name}" "${framework_bundle}/${framework_name}"
         echo "Updated install name for: ${framework_bundle}/${framework_name}"
 
         write_info_plist "$framework_bundle" "$framework_name" "$target" "$arch"
@@ -262,9 +264,10 @@ if [[ "$macos_arm64_available" == true ]] || [[ "$macos_x86_64_available" == tru
     ln -sf "Versions/Current/Resources" "${MACOS_UNIVERSAL_FRAMEWORK}/Resources"
     ln -sf "Versions/Current/Headers" "${MACOS_UNIVERSAL_FRAMEWORK}/Headers"
 
+    lipo=$(ls ./simplybs/.buildlib/env/*/native/bin/*-lipo | head -1)
     if [[ "$macos_arm64_available" == true ]] && [[ "$macos_x86_64_available" == true ]]; then
         echo "Creating universal macOS binary (arm64 + x86_64)..."
-        lipo -create "$MACOS_ARM64_DYLIB" "$MACOS_X86_64_DYLIB" -output "${MACOS_UNIVERSAL_FRAMEWORK}/Versions/A/${FRAMEWORK_NAME}"
+        $lipo -create "$MACOS_ARM64_DYLIB" "$MACOS_X86_64_DYLIB" -output "${MACOS_UNIVERSAL_FRAMEWORK}/Versions/A/${FRAMEWORK_NAME}"
         write_info_plist "${MACOS_UNIVERSAL_FRAMEWORK}/Versions/A/Resources" "$FRAMEWORK_NAME" "darwin" "arm64,x86_64"
     elif [[ "$macos_arm64_available" == true ]]; then
         echo "Creating arm64-only macOS binary..."
@@ -278,7 +281,8 @@ if [[ "$macos_arm64_available" == true ]] || [[ "$macos_x86_64_available" == tru
 
     echo "Created macOS binary: ${MACOS_UNIVERSAL_FRAMEWORK}/Versions/A/${FRAMEWORK_NAME}"
 
-    install_name_tool -id "@rpath/${FRAMEWORK_NAME}.framework/Versions/A/${FRAMEWORK_NAME}" "${MACOS_UNIVERSAL_FRAMEWORK}/Versions/A/${FRAMEWORK_NAME}"
+    install_name_tool=$(ls ./simplybs/.buildlib/env/*/native/bin/install_name_tool | head -1)
+    $install_name_tool -id "@rpath/${FRAMEWORK_NAME}.framework/Versions/A/${FRAMEWORK_NAME}" "${MACOS_UNIVERSAL_FRAMEWORK}/Versions/A/${FRAMEWORK_NAME}"
     echo "Updated install name for: ${MACOS_UNIVERSAL_FRAMEWORK}/Versions/A/${FRAMEWORK_NAME}"
 
     echo "macOS framework created: ${MACOS_UNIVERSAL_FRAMEWORK}"
