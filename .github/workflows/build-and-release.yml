@@ -161,11 +161,6 @@ jobs:
         with:
           path: simplybs/.buildlib/linux_amd64/env
 
-      - name: Normalize artifact layout
-        run: |
-          cd simplybs/.buildlib/linux_amd64/env
-          for d in */; do mv "$d"* . && rmdir "$d"; done
-
       - name: Linux -> macos
         run: |
           cp -a simplybs/.buildlib/linux_amd64 simplybs/.buildlib/darwin_amd64
