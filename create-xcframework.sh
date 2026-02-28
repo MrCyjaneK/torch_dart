@@ -46,11 +46,11 @@ write_info_plist() {
 
     if [[ "$target" == "ios-simulator" ]]; then
         platform="iPhoneSimulator"
-        min_os_version="12.0"
+        min_os_version="13.0"
         device_family="<integer>1</integer><integer>2</integer>"
     elif [[ "$target" == "ios" ]]; then
         platform="iPhoneOS"
-        min_os_version="12.0"
+        min_os_version="13.0"
         device_family="<integer>1</integer><integer>2</integer>"
     elif [[ "$target" == "darwin" ]]; then
         platform="MacOSX"
