@@ -324,14 +324,14 @@ if [[ "$ios_device_available" == true ]] || [[ "$ios_simulator_available" == tru
     fi
 
     create_xcframework "$FRAMEWORK_NAME" "$IOS_XCFRAMEWORK" "${ios_frameworks[@]}"
-    created_xcframeworks+=("iOS XCFramework: ${IOS_XCFRAMEWORK}")
+    created_xcframeworks+=("${IOS_XCFRAMEWORK}")
 fi
 
 # Create macOS XCFramework if we have macOS framework
 if [[ "$macos_arm64_available" == true ]] || [[ "$macos_x86_64_available" == true ]]; then
     MACOS_XCFRAMEWORK="${MACOS_DIR}/${FRAMEWORK_NAME}.xcframework"
     create_xcframework "$FRAMEWORK_NAME" "$MACOS_XCFRAMEWORK" "$MACOS_FRAMEWORK"
-    created_xcframeworks+=("macOS XCFramework: ${MACOS_XCFRAMEWORK}")
+    created_xcframeworks+=("${MACOS_XCFRAMEWORK}")
 fi
 
 echo ""
@@ -339,6 +339,10 @@ if [[ ${#created_xcframeworks[@]} -gt 0 ]]; then
     echo "XCFrameworks created successfully:"
     for xcframework in "${created_xcframeworks[@]}"; do
         echo "   $xcframework"
+        if [[ "x$(uname)" == "xDarwin" ]]; then
+            echo "Stripping adhoc signatures";
+            find "$xcframework" -name "*.framework" -type d -exec codesign --remove-signature {} \;
+        fi
     done
 else
     echo "No XCFrameworks were created (insufficient dylib files available)"
