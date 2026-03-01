@@ -1,11 +1,11 @@
 #!/bin/bash
-# 
+#
 # LibTorch XCFramework Builder
-# 
+#
 # This script creates XCFrameworks for LibTorch (Tor wrapper) for iOS and macOS platforms.
 # It processes the following dylibs:
 # - aarch64-apple-ios/lib/libtorch.dylib (iOS device)
-# - aarch64-apple-ios-simulator/lib/libtorch.dylib (iOS simulator)  
+# - aarch64-apple-ios-simulator/lib/libtorch.dylib (iOS simulator)
 # - aarch64-apple-darwin/lib/libtorch.dylib (macOS arm64)
 # - x86_64-apple-darwin/lib/libtorch.dylib (macOS x86_64)
 #
@@ -19,15 +19,14 @@ cd "$(dirname "$0")"
 
 # Configuration
 BASE_DIR="$(pwd)"
-DYLIB_PATH="${BASE_DIR}/simplybs/.buildlib/env"
-if [[ ! "x$SIMPLYBS_ENV_DIR" == "x" ]];
-then
-    DYLIB_PATH=$SIMPLYBS_ENV_DIR
-fi
 IOS_DIR="${BASE_DIR}/ios"
 MACOS_DIR="${BASE_DIR}/macos"
 TMP_DIR="${BASE_DIR}/tmp_torch_frameworks"
-
+DYLIB_PATH="${TMP_DIR}/dylibs"
+if [[ "x$SIMPLYBS_ENV_DIR" == "x" ]];
+then
+    SIMPLYBS_ENV_DIR=$PWD/simplybs/.buildlib/env
+fi
 # Clean up any existing temporary directory
 rm -rf "$TMP_DIR"
 mkdir -p "$TMP_DIR"
@@ -56,7 +55,7 @@ write_info_plist() {
         platform="MacOSX"
         min_os_version="10.15"
         device_family=""
-    else 
+    else
         echo "Unknown target: $target"
         exit 1
     fi
@@ -115,7 +114,7 @@ create_framework() {
     echo "Creating ${framework_name}.framework for target ${target} (${arch}) in ${out_dir}..."
 
     local framework_bundle="${out_dir}/${framework_name}.framework"
-    
+
     rm -rf "$framework_bundle"
     mkdir -p "$framework_bundle"
 
@@ -127,16 +126,16 @@ create_framework() {
     if [[ "$target" == "darwin" ]]; then
         mkdir -p "${framework_bundle}/Versions/A/Resources"
         mkdir -p "${framework_bundle}/Versions/A/Headers"
-        
+
         ln -sf "A" "${framework_bundle}/Versions/Current"
         ln -sf "Versions/Current/${framework_name}" "${framework_bundle}/${framework_name}"
         ln -sf "Versions/Current/Resources" "${framework_bundle}/Resources"
         ln -sf "Versions/Current/Headers" "${framework_bundle}/Headers"
-        
+
         cp "$dylib_path" "${framework_bundle}/Versions/A/${framework_name}"
         echo "Created binary: ${framework_bundle}/Versions/A/${framework_name}"
-        
-        install_name_tool=$(ls ./simplybs/.buildlib/env/*/native/bin/install_name_tool | head -1)
+
+        install_name_tool=$(ls $SIMPLYBS_ENV_DIR/native/bin/install_name_tool | head -1)
         $install_name_tool -id "@rpath/${framework_name}.framework/Versions/A/${framework_name}" "${framework_bundle}/Versions/A/${framework_name}"
         echo "Updated install name for: ${framework_bundle}/Versions/A/${framework_name}"
 
@@ -144,16 +143,16 @@ create_framework() {
     else
         cp "$dylib_path" "${framework_bundle}/${framework_name}"
         echo "Created binary: ${framework_bundle}/${framework_name}"
-        
-        install_name_tool=$(ls ./simplybs/.buildlib/env/*/native/bin/install_name_tool | head -1)
+
+        install_name_tool=$(ls $SIMPLYBS_ENV_DIR/native/bin/install_name_tool | head -1)
         $install_name_tool -id "@rpath/${framework_name}.framework/${framework_name}" "${framework_bundle}/${framework_name}"
         echo "Updated install name for: ${framework_bundle}/${framework_name}"
 
         write_info_plist "$framework_bundle" "$framework_name" "$target" "$arch"
-        
+
         mkdir -p "${framework_bundle}/Headers"
     fi
-    
+
     echo "Framework created: ${framework_bundle}"
 }
 
@@ -193,10 +192,26 @@ MACOS_UNIVERSAL_OUT="${TMP_DIR}/macos_universal"
 
 mkdir -p "$IOS_DEVICE_OUT" "$IOS_SIMULATOR_OUT" "$MACOS_ARM64_OUT" "$MACOS_X86_64_OUT" "$MACOS_UNIVERSAL_OUT"
 
-IOS_DEVICE_DYLIB="${DYLIB_PATH}/aarch64-apple-ios/lib/libtorch.dylib"
-IOS_SIMULATOR_DYLIB="${DYLIB_PATH}/aarch64-apple-ios-simulator/lib/libtorch.dylib"
-MACOS_ARM64_DYLIB="${DYLIB_PATH}/aarch64-apple-darwin/lib/libtorch.dylib"
-MACOS_X86_64_DYLIB="${DYLIB_PATH}/x86_64-apple-darwin/lib/libtorch.dylib"
+for i in aarch64-apple-ios aarch64-apple-ios-simulator aarch64-apple-darwin x86_64-apple-darwin;
+do
+    SO_PATH=.buildlib/env
+    if [[ ! "x$SIMPLYBS_ENV_DIR" == "x" ]];
+    then
+        SO_PATH=$SIMPLYBS_ENV_DIR
+    fi
+    pwd
+    pushd simplybs
+    go run . -host "$i" -extract -package torch,native/_
+        mkdir -p ${TMP_DIR}/dylibs/$i
+        cp $SO_PATH/lib/libtorch.dylib ${TMP_DIR}/dylibs/$i/libtorch.dylib
+    popd
+done
+
+
+IOS_DEVICE_DYLIB="${DYLIB_PATH}/aarch64-apple-ios/libtorch.dylib"
+IOS_SIMULATOR_DYLIB="${DYLIB_PATH}/aarch64-apple-ios-simulator/libtorch.dylib"
+MACOS_ARM64_DYLIB="${DYLIB_PATH}/aarch64-apple-darwin/libtorch.dylib"
+MACOS_X86_64_DYLIB="${DYLIB_PATH}/x86_64-apple-darwin/libtorch.dylib"
 
 echo "Validating dylib files..."
 missing_files=()
@@ -255,16 +270,16 @@ fi
 if [[ "$macos_arm64_available" == true ]] || [[ "$macos_x86_64_available" == true ]]; then
     echo "Creating macOS framework..."
     MACOS_UNIVERSAL_FRAMEWORK="${MACOS_UNIVERSAL_OUT}/${FRAMEWORK_NAME}.framework"
-    
+
     mkdir -p "${MACOS_UNIVERSAL_FRAMEWORK}/Versions/A/Resources"
     mkdir -p "${MACOS_UNIVERSAL_FRAMEWORK}/Versions/A/Headers"
-    
+
     ln -sf "A" "${MACOS_UNIVERSAL_FRAMEWORK}/Versions/Current"
     ln -sf "Versions/Current/${FRAMEWORK_NAME}" "${MACOS_UNIVERSAL_FRAMEWORK}/${FRAMEWORK_NAME}"
     ln -sf "Versions/Current/Resources" "${MACOS_UNIVERSAL_FRAMEWORK}/Resources"
     ln -sf "Versions/Current/Headers" "${MACOS_UNIVERSAL_FRAMEWORK}/Headers"
 
-    lipo=$(ls ./simplybs/.buildlib/env/*/native/bin/*-lipo | head -1)
+    lipo=$(ls $SIMPLYBS_ENV_DIR/native/bin/*-lipo | head -1)
     if [[ "$macos_arm64_available" == true ]] && [[ "$macos_x86_64_available" == true ]]; then
         echo "Creating universal macOS binary (arm64 + x86_64)..."
         $lipo -create "$MACOS_ARM64_DYLIB" "$MACOS_X86_64_DYLIB" -output "${MACOS_UNIVERSAL_FRAMEWORK}/Versions/A/${FRAMEWORK_NAME}"
@@ -281,7 +296,7 @@ if [[ "$macos_arm64_available" == true ]] || [[ "$macos_x86_64_available" == tru
 
     echo "Created macOS binary: ${MACOS_UNIVERSAL_FRAMEWORK}/Versions/A/${FRAMEWORK_NAME}"
 
-    install_name_tool=$(ls ./simplybs/.buildlib/env/*/native/bin/install_name_tool | head -1)
+    install_name_tool=$(ls $SIMPLYBS_ENV_DIR/native/bin/install_name_tool | head -1)
     $install_name_tool -id "@rpath/${FRAMEWORK_NAME}.framework/Versions/A/${FRAMEWORK_NAME}" "${MACOS_UNIVERSAL_FRAMEWORK}/Versions/A/${FRAMEWORK_NAME}"
     echo "Updated install name for: ${MACOS_UNIVERSAL_FRAMEWORK}/Versions/A/${FRAMEWORK_NAME}"
 
@@ -299,15 +314,15 @@ created_xcframeworks=()
 if [[ "$ios_device_available" == true ]] || [[ "$ios_simulator_available" == true ]]; then
     IOS_XCFRAMEWORK="${IOS_DIR}/${FRAMEWORK_NAME}.xcframework"
     ios_frameworks=()
-    
+
     if [[ "$ios_device_available" == true ]]; then
         ios_frameworks+=("$IOS_DEVICE_FRAMEWORK")
     fi
-    
+
     if [[ "$ios_simulator_available" == true ]]; then
         ios_frameworks+=("$IOS_SIMULATOR_FRAMEWORK")
     fi
-    
+
     create_xcframework "$FRAMEWORK_NAME" "$IOS_XCFRAMEWORK" "${ios_frameworks[@]}"
     created_xcframeworks+=("iOS XCFramework: ${IOS_XCFRAMEWORK}")
 fi
