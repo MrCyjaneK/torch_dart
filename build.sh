@@ -11,7 +11,7 @@ else
     cd simplybs
 fi
 git fetch -a
-git checkout 70ca89de2de7a0683b43b8a2cf7d95f925edf85c
+git checkout 751644c0ddc5b9e0de8285494aaba7640bc9ed40
 
 for target in "$@";
 do
