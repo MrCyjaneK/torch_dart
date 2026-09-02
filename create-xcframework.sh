@@ -27,6 +27,10 @@ if [[ "x$SIMPLYBS_ENV_DIR" == "x" ]];
 then
     SIMPLYBS_ENV_DIR=$PWD/simplybs/.buildlib/env
 fi
+if [[ "x$SIMPLYBS_NATIVE_ENV_DIR" == "x" ]];
+then
+    SIMPLYBS_NATIVE_ENV_DIR=$PWD/simplybs/.buildlib/env-native
+fi
 # Clean up any existing temporary directory
 rm -rf "$TMP_DIR"
 mkdir -p "$TMP_DIR"
@@ -135,7 +139,7 @@ create_framework() {
         cp "$dylib_path" "${framework_bundle}/Versions/A/${framework_name}"
         echo "Created binary: ${framework_bundle}/Versions/A/${framework_name}"
 
-        install_name_tool=$(ls $SIMPLYBS_ENV_DIR/native/bin/install_name_tool | head -1)
+        install_name_tool=$(ls $SIMPLYBS_NATIVE_ENV_DIR/bin/install_name_tool | head -1)
         $install_name_tool -id "@rpath/${framework_name}.framework/Versions/A/${framework_name}" "${framework_bundle}/Versions/A/${framework_name}"
         echo "Updated install name for: ${framework_bundle}/Versions/A/${framework_name}"
 
@@ -144,7 +148,7 @@ create_framework() {
         cp "$dylib_path" "${framework_bundle}/${framework_name}"
         echo "Created binary: ${framework_bundle}/${framework_name}"
 
-        install_name_tool=$(ls $SIMPLYBS_ENV_DIR/native/bin/install_name_tool | head -1)
+        install_name_tool=$(ls $SIMPLYBS_NATIVE_ENV_DIR/bin/install_name_tool | head -1)
         $install_name_tool -id "@rpath/${framework_name}.framework/${framework_name}" "${framework_bundle}/${framework_name}"
         echo "Updated install name for: ${framework_bundle}/${framework_name}"
 
@@ -279,7 +283,7 @@ if [[ "$macos_arm64_available" == true ]] || [[ "$macos_x86_64_available" == tru
     ln -sf "Versions/Current/Resources" "${MACOS_UNIVERSAL_FRAMEWORK}/Resources"
     ln -sf "Versions/Current/Headers" "${MACOS_UNIVERSAL_FRAMEWORK}/Headers"
 
-    lipo=$(ls $SIMPLYBS_ENV_DIR/native/bin/*-lipo | head -1)
+    lipo=$(ls $SIMPLYBS_NATIVE_ENV_DIR/bin/*-lipo | head -1)
     if [[ "$macos_arm64_available" == true ]] && [[ "$macos_x86_64_available" == true ]]; then
         echo "Creating universal macOS binary (arm64 + x86_64)..."
         $lipo -create "$MACOS_ARM64_DYLIB" "$MACOS_X86_64_DYLIB" -output "${MACOS_UNIVERSAL_FRAMEWORK}/Versions/A/${FRAMEWORK_NAME}"
@@ -296,7 +300,7 @@ if [[ "$macos_arm64_available" == true ]] || [[ "$macos_x86_64_available" == tru
 
     echo "Created macOS binary: ${MACOS_UNIVERSAL_FRAMEWORK}/Versions/A/${FRAMEWORK_NAME}"
 
-    install_name_tool=$(ls $SIMPLYBS_ENV_DIR/native/bin/install_name_tool | head -1)
+    install_name_tool=$(ls $SIMPLYBS_NATIVE_ENV_DIR/bin/install_name_tool | head -1)
     $install_name_tool -id "@rpath/${FRAMEWORK_NAME}.framework/Versions/A/${FRAMEWORK_NAME}" "${MACOS_UNIVERSAL_FRAMEWORK}/Versions/A/${FRAMEWORK_NAME}"
     echo "Updated install name for: ${MACOS_UNIVERSAL_FRAMEWORK}/Versions/A/${FRAMEWORK_NAME}"
 

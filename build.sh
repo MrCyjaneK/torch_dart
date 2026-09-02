@@ -11,7 +11,7 @@ else
     cd simplybs
 fi
 git fetch -a
-git checkout 5c8da8dc333d4ef40728ddf3d73418f19ca44a58
+git checkout 9b1e86953fde5827d903243fc230ad66d39b6de0
 
 for target in "$@";
 do
@@ -27,6 +27,8 @@ done
 # go run . -cleanup
 for target in "$@";
 do
+    unset SIMPLYBS_ENV_DIR
+    unset SIMPLYBS_NATIVE_ENV_DIR
     go run . -host "$target" -build -package torch
 done
 # go run . -cleanup
