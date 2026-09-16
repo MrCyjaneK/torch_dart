@@ -31,6 +31,10 @@ if [[ "x$SIMPLYBS_NATIVE_ENV_DIR" == "x" ]];
 then
     SIMPLYBS_NATIVE_ENV_DIR=$PWD/simplybs/.buildlib/env-native
 fi
+
+ALL_APPLE_TARGETS="aarch64-apple-ios aarch64-apple-ios-simulator aarch64-apple-darwin x86_64-apple-darwin"
+APPLE_TARGETS="${*:-$ALL_APPLE_TARGETS}"
+
 # Clean up any existing temporary directory
 rm -rf "$TMP_DIR"
 mkdir -p "$TMP_DIR"
@@ -196,8 +200,7 @@ MACOS_UNIVERSAL_OUT="${TMP_DIR}/macos_universal"
 
 mkdir -p "$IOS_DEVICE_OUT" "$IOS_SIMULATOR_OUT" "$MACOS_ARM64_OUT" "$MACOS_X86_64_OUT" "$MACOS_UNIVERSAL_OUT"
 
-for i in aarch64-apple-ios aarch64-apple-ios-simulator aarch64-apple-darwin x86_64-apple-darwin;
-do
+for i in $APPLE_TARGETS; do
     SO_PATH=.buildlib/env
     if [[ ! "x$SIMPLYBS_ENV_DIR" == "x" ]];
     then

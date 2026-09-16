@@ -61,6 +61,6 @@ fi
 if [[ "$@" == *"-apple-"* ]];
 then
     pushd ..
-        ./create-xcframework.sh
+        ./create-xcframework.sh "$@"
     popd
 fi
