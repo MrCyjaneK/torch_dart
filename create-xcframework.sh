@@ -32,6 +32,13 @@ then
     SIMPLYBS_NATIVE_ENV_DIR=$PWD/simplybs/.buildlib/env-native
 fi
 
+if [[ "x$(uname)" == "xDarwin" ]];
+then
+    XCODEBUILD_COMMAND="${XCODEBUILD_COMMAND:-xcodebuild}"
+else
+    XCODEBUILD_COMMAND="${XCODEBUILD_COMMAND:-$BASE_DIR/xcodebuild_shim.sh}"
+fi
+
 ALL_APPLE_TARGETS="aarch64-apple-ios aarch64-apple-ios-simulator aarch64-apple-darwin x86_64-apple-darwin"
 APPLE_TARGETS="${*:-$ALL_APPLE_TARGETS}"
 
@@ -181,7 +188,7 @@ create_xcframework() {
     done
 
     rm -rf "$xcframework_output"
-    xcodebuild -create-xcframework "${xcodebuild_args[@]}" -output "$xcframework_output"
+    "$XCODEBUILD_COMMAND" -create-xcframework "${xcodebuild_args[@]}" -output "$xcframework_output"
 
     echo "Created XCFramework: ${xcframework_output}"
 }
