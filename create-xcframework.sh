@@ -25,11 +25,11 @@ TMP_DIR="${BASE_DIR}/tmp_torch_frameworks"
 DYLIB_PATH="${TMP_DIR}/dylibs"
 if [[ "x$SIMPLYBS_ENV_DIR" == "x" ]];
 then
-    SIMPLYBS_ENV_DIR=$PWD/simplybs/.buildlib/env
+    export SIMPLYBS_ENV_DIR=$PWD/simplybs/.buildlib/env
 fi
 if [[ "x$SIMPLYBS_NATIVE_ENV_DIR" == "x" ]];
 then
-    SIMPLYBS_NATIVE_ENV_DIR=$PWD/simplybs/.buildlib/env-native
+    export SIMPLYBS_NATIVE_ENV_DIR=$PWD/simplybs/.buildlib/env-native
 fi
 
 export LD_LIBRARY_PATH="$SIMPLYBS_NATIVE_ENV_DIR/lib${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
