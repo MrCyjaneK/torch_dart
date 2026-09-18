@@ -32,6 +32,8 @@ then
     SIMPLYBS_NATIVE_ENV_DIR=$PWD/simplybs/.buildlib/env-native
 fi
 
+export LD_LIBRARY_PATH="$SIMPLYBS_NATIVE_ENV_DIR/lib${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
+
 if [[ "x$(uname)" == "xDarwin" ]];
 then
     XCODEBUILD_COMMAND="${XCODEBUILD_COMMAND:-xcodebuild}"
@@ -215,7 +217,7 @@ for i in $APPLE_TARGETS; do
     fi
     pwd
     pushd simplybs
-    go run . -host "$i" -extract -package torch,native/_
+    go run . -host "$i" -extract -package torch,native/_,native/libc++
         mkdir -p ${TMP_DIR}/dylibs/$i
         cp $SO_PATH/lib/libtorch.dylib ${TMP_DIR}/dylibs/$i/libtorch.dylib
     popd
