@@ -34,12 +34,9 @@ fi
 
 export LD_LIBRARY_PATH="$SIMPLYBS_NATIVE_ENV_DIR/lib${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
 
-if [[ "x$(uname)" == "xDarwin" ]];
-then
-    XCODEBUILD_COMMAND="${XCODEBUILD_COMMAND:-xcodebuild}"
-else
-    XCODEBUILD_COMMAND="${XCODEBUILD_COMMAND:-$BASE_DIR/xcodebuild_shim.sh}"
-fi
+# using a shim instead of real xcodebuild so you can build a framework on linux
+# if more functionality is needed either expand the shim or switch to real xcodebuild and accept that it's darwin-only now
+XCODEBUILD_COMMAND="${XCODEBUILD_COMMAND:-$BASE_DIR/xcodebuild_shim.sh}"
 
 ALL_APPLE_TARGETS="aarch64-apple-ios aarch64-apple-ios-simulator aarch64-apple-darwin x86_64-apple-darwin"
 APPLE_TARGETS="${*:-$ALL_APPLE_TARGETS}"
