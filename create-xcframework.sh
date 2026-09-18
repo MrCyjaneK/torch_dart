@@ -25,12 +25,18 @@ TMP_DIR="${BASE_DIR}/tmp_torch_frameworks"
 DYLIB_PATH="${TMP_DIR}/dylibs"
 if [[ "x$SIMPLYBS_ENV_DIR" == "x" ]];
 then
-    SIMPLYBS_ENV_DIR=$PWD/simplybs/.buildlib/env
+    export SIMPLYBS_ENV_DIR=$PWD/simplybs/.buildlib/env
 fi
 if [[ "x$SIMPLYBS_NATIVE_ENV_DIR" == "x" ]];
 then
-    SIMPLYBS_NATIVE_ENV_DIR=$PWD/simplybs/.buildlib/env-native
+    export SIMPLYBS_NATIVE_ENV_DIR=$PWD/simplybs/.buildlib/env-native
 fi
+
+export LD_LIBRARY_PATH="$SIMPLYBS_NATIVE_ENV_DIR/lib${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
+
+# using a shim instead of real xcodebuild so you can build a framework on linux
+# if more functionality is needed either expand the shim or switch to real xcodebuild and accept that it's darwin-only now
+XCODEBUILD_COMMAND="${XCODEBUILD_COMMAND:-$BASE_DIR/xcodebuild_shim.sh}"
 
 ALL_APPLE_TARGETS="aarch64-apple-ios aarch64-apple-ios-simulator aarch64-apple-darwin x86_64-apple-darwin"
 APPLE_TARGETS="${*:-$ALL_APPLE_TARGETS}"
@@ -181,7 +187,7 @@ create_xcframework() {
     done
 
     rm -rf "$xcframework_output"
-    xcodebuild -create-xcframework "${xcodebuild_args[@]}" -output "$xcframework_output"
+    "$XCODEBUILD_COMMAND" -create-xcframework "${xcodebuild_args[@]}" -output "$xcframework_output"
 
     echo "Created XCFramework: ${xcframework_output}"
 }
@@ -208,7 +214,7 @@ for i in $APPLE_TARGETS; do
     fi
     pwd
     pushd simplybs
-    go run . -host "$i" -extract -package torch,native/_
+    go run . -host "$i" -extract -package torch,native/_,native/libc++
         mkdir -p ${TMP_DIR}/dylibs/$i
         cp $SO_PATH/lib/libtorch.dylib ${TMP_DIR}/dylibs/$i/libtorch.dylib
     popd
