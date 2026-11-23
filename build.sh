@@ -2,65 +2,58 @@
 set -x -e
 
 cd "$(dirname "$0")"
+SCRIPT_DIR=$PWD
 
-if [[ ! -d "simplybs" ]];
+if [[ ! -d "$HOME/.local/share/simplybs/repo" ]];
 then
-    git clone https://github.com/MrCyjaneK/simplybs
-    cd simplybs
-else
-    cd simplybs
+    echo "simplybs repo not found in $HOME/.local/share/simplybs/repo"
+    echo "please install it first."
+    exit 1
 fi
-git fetch -a
-git checkout 01945d24524cc2d1ec8ad5e32f1d199c566ae83f
-
-for target in "$@";
-do
-    if [[ "x$SIMPLYBS_DOWNLOAD_FIRST" == "xyes" ]];
-    then
-        for dep in $(go run . -host $target -package torch -list | awk '{ print $2 }');
-        do
-            go run . -host "$target" -download -package $dep
-        done
-    fi
-done
+cd $HOME/.local/share/simplybs/repo
 
 # go run . -cleanup
 for target in "$@";
 do
-    unset SIMPLYBS_ENV_DIR
-    unset SIMPLYBS_NATIVE_ENV_DIR
     go run . -host "$target" -build -package torch
 done
 # go run . -cleanup
 
 for target in "$@";
 do
-    SO_PATH=.buildlib/env
-    if [[ ! "x$SIMPLYBS_ENV_DIR" == "x" ]];
+    if [[ "x$target" == "x" ]];
     then
-        SO_PATH=$SIMPLYBS_ENV_DIR
+        echo "target is not set '$target' - $@"
     fi
+    SO_PATH=/opt/_/$target
     go run . -host "$target" -extract -package torch
     if [[ "$target" == "aarch64-linux-android" ]];
     then
-        cp $SO_PATH/lib/libtorch.so ../android/src/main/jniLibs/arm64-v8a/libtorch.so
+        cp $SO_PATH/lib/libtorch.so $SCRIPT_DIR/android/src/main/jniLibs/arm64-v8a/libtorch.so
     elif [[ "$target" == "x86_64-linux-android" ]];
     then
-        cp $SO_PATH/lib/libtorch.so ../android/src/main/jniLibs/x86_64/libtorch.so
+        cp $SO_PATH/lib/libtorch.so $SCRIPT_DIR/android/src/main/jniLibs/x86_64/libtorch.so
     elif [[ "$target" == "armv7a-linux-androideabi" ]];
     then
-        cp $SO_PATH/lib/libtorch.so ../android/src/main/jniLibs/armeabi-v7a/libtorch.so
+        cp $SO_PATH/lib/libtorch.so $SCRIPT_DIR/android/src/main/jniLibs/armeabi-v7a/libtorch.so
     fi
 done
 
-# shellcheck disable=SC2199
 if [[ "x$SKIP_XC" == "xyes" ]];
 then
     exit 0
 fi
-if [[ "$@" == *"-apple-"* ]];
+apple_args=()
+for target in "$@";
+do
+    if [[ "$target" == *-apple-* ]];
+    then
+        apple_args+=("$target")
+    fi
+done
+if ((${#apple_args[@]}));
 then
-    pushd ..
-        ./create-xcframework.sh "$@"
+    pushd $SCRIPT_DIR
+        ./create-xcframework.sh "${apple_args[@]}"
     popd
 fi

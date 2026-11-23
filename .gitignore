@@ -38,3 +38,5 @@ simplybs
 .fvm/
 
 LibTorch.xcframework
+
+tmp_*

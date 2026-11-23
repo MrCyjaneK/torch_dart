@@ -52,23 +52,21 @@ done
 # cctools-port symlinks its tools to unprefixed names, but fall back to the
 # prefixed form and then to PATH so this works on macOS too.
 find_lipo() {
-    if [[ -n "${SIMPLYBS_NATIVE_ENV_DIR:-}" ]]; then
-        if [[ -x "$SIMPLYBS_NATIVE_ENV_DIR/bin/lipo" ]]; then
-            echo "$SIMPLYBS_NATIVE_ENV_DIR/bin/lipo"
-            return 0
-        fi
-        local prefixed
-        prefixed="$(ls "$SIMPLYBS_NATIVE_ENV_DIR"/bin/*-lipo 2>/dev/null | head -1)"
-        if [[ -n "$prefixed" ]]; then
-            echo "$prefixed"
-            return 0
-        fi
+    if [[ -x "/opt/_/native/bin/lipo" ]]; then
+        echo "/opt/_/native/bin/lipo"
+        return 0
+    fi
+    local prefixed
+    prefixed="$(ls "/opt/_/native/bin/*-lipo" 2>/dev/null | head -1)"
+    if [[ -n "$prefixed" ]]; then
+        echo "$prefixed"
+        return 0
     fi
     command -v lipo 2>/dev/null || true
 }
 
 LIPO="$(find_lipo)"
-[[ -n "$LIPO" ]] || usage_error "no lipo found (set SIMPLYBS_NATIVE_ENV_DIR or put lipo on PATH)"
+[[ -n "$LIPO" ]] || usage_error "no lipo found"
 
 records="$(mktemp)"
 trap 'rm -f "$records"' EXIT

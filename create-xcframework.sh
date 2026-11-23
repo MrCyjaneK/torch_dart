@@ -23,16 +23,8 @@ IOS_DIR="${BASE_DIR}/ios"
 MACOS_DIR="${BASE_DIR}/macos"
 TMP_DIR="${BASE_DIR}/tmp_torch_frameworks"
 DYLIB_PATH="${TMP_DIR}/dylibs"
-if [[ "x$SIMPLYBS_ENV_DIR" == "x" ]];
-then
-    export SIMPLYBS_ENV_DIR=$PWD/simplybs/.buildlib/env
-fi
-if [[ "x$SIMPLYBS_NATIVE_ENV_DIR" == "x" ]];
-then
-    export SIMPLYBS_NATIVE_ENV_DIR=$PWD/simplybs/.buildlib/env-native
-fi
 
-export LD_LIBRARY_PATH="$SIMPLYBS_NATIVE_ENV_DIR/lib${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
+export LD_LIBRARY_PATH="/opt/_/native/lib${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
 
 # using a shim instead of real xcodebuild so you can build a framework on linux
 # if more functionality is needed either expand the shim or switch to real xcodebuild and accept that it's darwin-only now
@@ -41,11 +33,9 @@ XCODEBUILD_COMMAND="${XCODEBUILD_COMMAND:-$BASE_DIR/xcodebuild_shim.sh}"
 ALL_APPLE_TARGETS="aarch64-apple-ios aarch64-apple-ios-simulator aarch64-apple-darwin x86_64-apple-darwin"
 APPLE_TARGETS="${*:-$ALL_APPLE_TARGETS}"
 
-# Clean up any existing temporary directory
 rm -rf "$TMP_DIR"
 mkdir -p "$TMP_DIR"
 
-# Ensure output directories exist
 mkdir -p "$IOS_DIR" "$MACOS_DIR"
 
 write_info_plist() {
@@ -149,7 +139,7 @@ create_framework() {
         cp "$dylib_path" "${framework_bundle}/Versions/A/${framework_name}"
         echo "Created binary: ${framework_bundle}/Versions/A/${framework_name}"
 
-        install_name_tool=$(ls $SIMPLYBS_NATIVE_ENV_DIR/bin/install_name_tool | head -1)
+        install_name_tool=$(ls /opt/_/native/bin/install_name_tool | head -1)
         $install_name_tool -id "@rpath/${framework_name}.framework/Versions/A/${framework_name}" "${framework_bundle}/Versions/A/${framework_name}"
         echo "Updated install name for: ${framework_bundle}/Versions/A/${framework_name}"
 
@@ -158,7 +148,7 @@ create_framework() {
         cp "$dylib_path" "${framework_bundle}/${framework_name}"
         echo "Created binary: ${framework_bundle}/${framework_name}"
 
-        install_name_tool=$(ls $SIMPLYBS_NATIVE_ENV_DIR/bin/install_name_tool | head -1)
+        install_name_tool=$(ls /opt/_/native/bin/install_name_tool | head -1)
         $install_name_tool -id "@rpath/${framework_name}.framework/${framework_name}" "${framework_bundle}/${framework_name}"
         echo "Updated install name for: ${framework_bundle}/${framework_name}"
 
@@ -207,16 +197,10 @@ MACOS_UNIVERSAL_OUT="${TMP_DIR}/macos_universal"
 mkdir -p "$IOS_DEVICE_OUT" "$IOS_SIMULATOR_OUT" "$MACOS_ARM64_OUT" "$MACOS_X86_64_OUT" "$MACOS_UNIVERSAL_OUT"
 
 for i in $APPLE_TARGETS; do
-    SO_PATH=.buildlib/env
-    if [[ ! "x$SIMPLYBS_ENV_DIR" == "x" ]];
-    then
-        SO_PATH=$SIMPLYBS_ENV_DIR
-    fi
-    pwd
-    pushd simplybs
-    go run . -host "$i" -extract -package torch,native/_,native/libc++
+    pushd $HOME/.local/share/simplybs/repo
+        go run . -host "$i" -extract -package torch,native/_,native/libc++
         mkdir -p ${TMP_DIR}/dylibs/$i
-        cp $SO_PATH/lib/libtorch.dylib ${TMP_DIR}/dylibs/$i/libtorch.dylib
+        cp /opt/_/$i/lib/libtorch.dylib ${TMP_DIR}/dylibs/$i/libtorch.dylib
     popd
 done
 
@@ -292,7 +276,7 @@ if [[ "$macos_arm64_available" == true ]] || [[ "$macos_x86_64_available" == tru
     ln -sf "Versions/Current/Resources" "${MACOS_UNIVERSAL_FRAMEWORK}/Resources"
     ln -sf "Versions/Current/Headers" "${MACOS_UNIVERSAL_FRAMEWORK}/Headers"
 
-    lipo=$(ls $SIMPLYBS_NATIVE_ENV_DIR/bin/*-lipo | head -1)
+    lipo=$(ls /opt/_/native/bin/*-lipo | head -1)
     if [[ "$macos_arm64_available" == true ]] && [[ "$macos_x86_64_available" == true ]]; then
         echo "Creating universal macOS binary (arm64 + x86_64)..."
         $lipo -create "$MACOS_ARM64_DYLIB" "$MACOS_X86_64_DYLIB" -output "${MACOS_UNIVERSAL_FRAMEWORK}/Versions/A/${FRAMEWORK_NAME}"
@@ -309,7 +293,7 @@ if [[ "$macos_arm64_available" == true ]] || [[ "$macos_x86_64_available" == tru
 
     echo "Created macOS binary: ${MACOS_UNIVERSAL_FRAMEWORK}/Versions/A/${FRAMEWORK_NAME}"
 
-    install_name_tool=$(ls $SIMPLYBS_NATIVE_ENV_DIR/bin/install_name_tool | head -1)
+    install_name_tool=$(ls /opt/_/native/bin/install_name_tool | head -1)
     $install_name_tool -id "@rpath/${FRAMEWORK_NAME}.framework/Versions/A/${FRAMEWORK_NAME}" "${MACOS_UNIVERSAL_FRAMEWORK}/Versions/A/${FRAMEWORK_NAME}"
     echo "Updated install name for: ${MACOS_UNIVERSAL_FRAMEWORK}/Versions/A/${FRAMEWORK_NAME}"
 
